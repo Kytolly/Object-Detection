@@ -1,1 +1,80 @@
-\\section{实验步骤}\n\n本实验按照以下步骤实现并评估了不同的场景分类方法：\n\n\\subsection{数据准备}\n\n首先，加载场景图像数据集，并将其划分为训练集和测试集。数据集路径和划分比例在代码中预先设定。\n\n\\subsection{基于 Tiny Images 和 KNN 的场景分类}\n\n\\begin{enumerate}\n    \\item \\textbf{特征提取:} 对训练集和测试集中的每张图像，执行以下操作生成 Tiny Images 特征：\n    \\begin{itemize}\n        \\item 读取图像并转换为灰度。\n        \\item 将图像缩放到固定的小尺寸（例如 $16 \\times 16$ 像素）。\n        \\item 将缩放后的图像像素值展平为一维特征向量。\n        \\item 对特征向量进行归一化（例如，减去均值并除以标准差）。\n    \\end{itemize}\n    得到训练集和测试集的 Tiny Images 特征矩阵。\n    \\item \\textbf{分类:} 使用 K 近邻 (KNN) 分类器。对于测试集中的每个样本，计算其与所有训练集样本的欧氏距离，找出最近的 $K$ 个邻居（实验中 $K$ 的值可调，例如取 $K=1$ 或其他值），然后根据这 $K$ 个邻居的多数投票决定测试样本的类别。\n    \\item \\textbf{评估:} 计算 KNN 分类器在测试集上的分类准确率。\n\\end{enumerate}\n\n\\subsection{基于 Bag of Words (SIFT) 和 SVM 的场景分类}\n\n\\begin{enumerate}\n    \\item \\textbf{构建视觉词汇表:}\n    \\begin{itemize}\n        \\item 从训练集图像中提取大量的 SIFT 局部特征描述符。\n        \\item 使用 MiniBatchKMeans 聚类算法对收集到的 SIFT 特征进行聚类，聚类中心数量设定为词汇表大小 (vocab\_size)。\n        \\item 将聚类中心保存为视觉词汇表。\n    \\end{itemize}\n    \\item \\textbf{生成 Bag of Words 特征:}\n    \\begin{itemize}\n        \\item 对训练集和测试集中的每张图像，提取其 SIFT 局部特征。\n        \\item 对于每个提取到的 SIFT 特征，在视觉词汇表中找到距离最近的视觉词汇。\n        \\item 统计每个视觉词汇在该图像中出现的频率，生成该图像的 Bag of Words 直方图特征向量。\n    \\end{itemize}\n    得到训练集和测试集的 Bag of Words 特征矩阵。\n    \\item \\textbf{分类:} 使用支持向量机 (SVM) 分类器（具体为 LinearSVC）。使用训练集的 Bag of Words 特征和标签训练 SVM 分类器（采用 One-vs-Rest 策略处理多类别问题）。\n    \\item \\textbf{评估:} 使用训练好的 SVM 分类器预测测试集图像的类别，并计算分类准确率。\n\\end{enumerate}\n\n\\subsection{基于深度神经网络 (DNN) 的场景分类（如果实现）}\n\n\\begin{enumerate}\n    \\item \\textbf{模型构建:} 定义一个卷积神经网络 (CNN) 模型架构，包括卷积层、激活层、池化层和全连接层等。\n    \\item \\textbf{数据处理:} 对图像数据进行必要的预处理和数据增强，并使用数据加载器进行批量处理。\n    \\item \\textbf{模型训练:} 定义损失函数（如交叉熵）和优化器。使用训练集数据训练 DNN 模型，通过反向传播更新模型参数。\n    \\item \\textbf{评估:} 在测试集上评估训练好的 DNN 模型的分类性能，计算准确率。\n\\end{enumerate}\n\n\\subsection{结果比较与分析}\n\n最后，比较不同方法（Tiny Images + KNN, Bag of Words + SVM, 以及 DNN）在测试集上的分类准确率。分析不同特征表示方法和分类器对场景分类性能的影响，讨论各方法的优劣和适用场景。 
+\subsection{实验环境配置}
+\begin{itemize}
+    \item \textbf{安装Python}: 确保Python 3.8+已安装，并配置好环境变量。
+    \item \textbf{创建虚拟环境}: 推荐使用conda或venv创建独立的Python虚拟环境，以避免库冲突。
+    \begin{verbatim}
+        conda create -n obj_det python=3.9
+        conda activate obj_det
+    \end{verbatim}
+    \item \textbf{安装PyTorch/TensorFlow}: 根据硬件（特别是GPU）和操作系统，安装对应版本的深度学习框架。
+    \begin{verbatim}
+        # PyTorch (CUDA 11.8为例)
+        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+    \end{verbatim}
+    \item \textbf{安装其他依赖库}:
+    \begin{verbatim}
+        pip install numpy opencv-python matplotlib pillow
+    \end{verbatim}
+    \item \textbf{安装mmcv-full}: 如果选择OpenMMLab系列算法，需要安装mmcv-full。
+    \begin{verbatim}
+        pip install -U openmim
+        mim install mmcv-full
+    \end{verbatim}
+    \item \textbf{安装ultralytics}: 如果选择YOLOv8等Ultralytics系列算法，需要安装ultralytics。
+    \begin{verbatim}
+        pip install ultralytics
+    \end{verbatim}
+\end{itemize}
+
+\subsection{开源项目部署}
+\begin{itemize}
+    \item \textbf{克隆项目}: 从GitHub等平台克隆所选目标检测算法的开源项目。
+    \begin{verbatim}
+        git clone https://github.com/ultralytics/ultralytics.git # 例如YOLOv8
+        git clone https://github.com/open-mmlab/mmdetection.git # 例如Faster R-CNN, FCOS
+    \end{verbatim}
+    \item \textbf{安装项目依赖}: 进入项目目录，安装其特有的依赖。
+    \begin{verbatim}
+        # 例如mmdetection
+        cd mmdetection
+        pip install -v -e .
+    \end{verbatim}
+    \item \textbf{下载预训练模型}: 下载对应算法的预训练模型权重文件（通常是.pth或.pt文件）。
+\end{itemize}
+
+\subsection{图像数据准备}
+\begin{itemize}
+    \item \textbf{拍摄图像}: 使用手机或相机在校园内拍摄多张图像，确保图像清晰，包含多种目标。
+    \item \textbf{整理数据}: 将拍摄的图像统一存放于一个文件夹中，例如`data/campus_images/`。
+\end{itemize}
+
+\subsection{目标检测API调用}
+\begin{itemize}
+    \item \textbf{编写检测脚本}: 编写Python脚本或Jupyter Notebook，导入已部署的算法库，加载预训练模型，并调用其API进行推理。
+    \item \textbf{示例代码结构}:
+    \begin{verbatim}
+        import cv2
+        from ultralytics import YOLO # 或 from mmdet.apis import init_detector, inference_detector
+
+        # 加载模型
+        model = YOLO('yolov8n.pt') # 或 model = init_detector(config_file, checkpoint_file, device='cuda:0')
+
+        # 读取图像
+        img_path = 'data/campus_images/image_01.jpg'
+        img = cv2.imread(img_path)
+
+        # 进行推理
+        results = model(img) # 或 result = inference_detector(model, img)
+
+        # 解析结果并可视化
+        # ... (此处省略具体解析和可视化代码)
+    \end{verbatim}
+\end{itemize}
+
+\subsection{结果可视化与分析}
+\begin{itemize}
+    \item \textbf{可视化}: 在原始图像上绘制检测到的边界框、类别标签和置信度。
+    \todo{目标检测结果可视化示例图}
+    \item \textbf{定性分析}: 观察不同算法在不同场景下（如光照变化、目标遮挡、小目标、密集目标等）的检测效果。
+    \item \textbf{定量分析}: 记录并对比不同算法的推理速度（FPS）和检测精度（如mAP，如果条件允许）。
+\end{itemize}
